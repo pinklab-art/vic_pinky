@@ -1,0 +1,9 @@
+<library path="zlac_hardware_interface">
+  <class name="zlac_ros2_control/ZlacHardwareInterface"
+         type="zlac_ros2_control::ZlacHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      The ZLAC8015D hardware interface for ros2_control.
+    </description>
+  </class>
+</library>
