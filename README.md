@@ -1,6 +1,5 @@
 # vic_pinky
 <img src="/doc/image.png" width="40%" height="30%" title="vicpinky" alt="vicpinky"></img>
-<<<<<<< HEAD
 
 # ROBOT 설정
 ## 환경
@@ -49,5 +48,3 @@ source ~/.bashrc
 ```
 ros2 launch vicpinky_bringup bringup.launch.xml
 ```
-=======
->>>>>>> 3245815b4915043ed2112fed4b3ec80bd3e246a8
