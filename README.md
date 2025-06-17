@@ -46,6 +46,5 @@ source ~/.bashrc
 # Vic Pinky brinup
 
 ```
-source ~/pinky_violet/install/local_setup.bash
-ros2 launch pinky_bringup bringup.launch.xml
+ros2 launch vicpinky_bringup bringup.launch.xml
 ```
