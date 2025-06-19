@@ -2,9 +2,10 @@
 
 <launch>
     <arg name="default_rviz_config_path" default="$(find-pkg-share vicpinky_description)/rviz/urdf_config.rviz"/>
+    <arg name="prefix" default=""/>
     
     <node pkg="robot_state_publisher" exec="robot_state_publisher" name='robot_state_publisher' output='screen'>
-        <param name="robot_description" value="$(command 'xacro $(find-pkg-share vicpinky_description)/urdf/robot_core.xacro')" />
+        <param name="robot_description" value="$(command 'xacro $(find-pkg-share vicpinky_description)/urdf/robot_core.xacro namespace:=$(var prefix)')" />
     </node>
 
     <node pkg="joint_state_publisher_gui" exec="joint_state_publisher_gui" name="joint_state_publisher" output="screen"/>

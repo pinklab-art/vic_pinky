@@ -1,0 +1,32 @@
+<?xml version='1.0' ?>
+
+<launch>
+    <arg name="namespace" default=""/>
+    <arg name="robot_name" default="$(var namespace)/pinky"/>
+    <arg name="x" default="0.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="0.1"/>
+    <arg name="R" default="0.0"/>
+    <arg name="P" default="0.0"/>
+    <arg name="Y" default="0.0"/>
+
+    <include file="$(find-pkg-share vicpinky_description)/launch/upload.launch.xml">
+        <arg name='use_sim_time' value='True'/>
+        <arg name='prefix' value='$(var namespace)/'/>
+    </include>
+
+    <node pkg="ros_gz_sim" exec="create" name='create' output='screen' 
+        args="-name $(var robot_name) -topic $(var namespace)/robot_description 
+            -x $(var x) -y $(var y) -z $(var z) 
+            -R $(var R) -P $(var P) -Y $(var Y)">
+        <param name='use_sim_time' value='True'/>
+    </node>
+
+    <node pkg="ros_gz_bridge" exec="parameter_bridge" name='parameter_bridge' output='screen' 
+        args="$(var namespace)/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan 
+            $(var namespace)/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist 
+            $(var namespace)/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry 
+            $(var namespace)/joint_states@sensor_msgs/msg/JointState@gz.msgs.Model"/>
+    
+    <node pkg="ros_gz_image" exec="image_bridge" name='image_bridge' output='screen' args="$(var namespace)/camera/image_raw"/>
+</launch>

@@ -1,14 +1,16 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+    <xacro:arg name="namespace" default=""/>
+    <xacro:property name="prefix" value="$(arg namespace)"/>
 
-    <gazebo reference="laser_link">
+    <gazebo reference="${prefix}laser_link">
         <sensor name="laser" type="gpu_lidar">
             <always_on>true</always_on>
             <visualize>true</visualize>
             <pose> 0 0 0 0 0 0 </pose>
             <update_rate>5</update_rate>
-            <topic>scan</topic>
-            <gz_frame_id>laser_link</gz_frame_id>
+            <topic>${prefix}scan</topic>
+            <gz_frame_id>${prefix}laser_link</gz_frame_id>
             <lidar>
                 <scan>
                     <horizontal>

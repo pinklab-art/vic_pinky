@@ -1,10 +1,10 @@
 <?xml version='1.0'?>
 <launch>
-    <arg name="namespace" default=""/>
+    <arg name="prefix" default=""/>
     <arg name="use_sim_time" default="True"/>
 
-    <node pkg="robot_state_publisher" exec="robot_state_publisher" name='robot_state_publisher' output='screen' namespace="$(var namespace)">
-        <param name="robot_description" value="$(command 'xacro $(find-pkg-share vicpinky_description)/urdf/robot.urdf.xacro namespace:=$(var namespace)/')"/>
+    <node pkg="robot_state_publisher" exec="robot_state_publisher" name='robot_state_publisher' output='screen' namespace="$(var prefix)">
+        <param name="robot_description" value="$(command 'xacro $(find-pkg-share vicpinky_description)/urdf/robot.urdf.xacro namespace:=$(var prefix)')"/>
         <param name='use_sim_time' value='$(var use_sim_time)'/>
     </node>
 </launch>
