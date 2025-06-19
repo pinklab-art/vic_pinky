@@ -13,7 +13,7 @@
   <test_depend>python3-pytest</test_depend>
   
   <depend>tf_transformations</depend>
-  <depend>laser-filters</depend>
+  <depend>laser_filters</depend>
   <depend>pyseiral</depend>
 
   <export>
