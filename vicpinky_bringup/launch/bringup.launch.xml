@@ -17,5 +17,4 @@
     <node pkg="laser_filters" exec="scan_to_scan_filter_chain">
         <param from="$(var filter_yaml_path)" />
     </node>
-
 </launch>

@@ -72,7 +72,7 @@ class ZlacRosNode(Node):
             return
         
         self.get_logger().info("Waiting for motor controller to be ready...")
-        time.sleep(1.0) # 컨트롤러 안정화를 위해 대기 시간 증가
+        time.sleep(1.0)
 
         self.get_logger().info("4. Verifying motor controller is responsive...")
         rpm_l, rpm_r = self.driver.get_rpm()
@@ -130,13 +130,19 @@ class ZlacRosNode(Node):
         angular_z = msg.angular.z
 
         # Inverse Kinematics: Convert Twist to RPM for each wheel
-        v_l = linear_x - (angular_z * WHEEL_BASE / 2.0)
-        v_r = linear_x + (angular_z * WHEEL_BASE / 2.0)
-        
-        rpm_l = v_l / (WHEEL_RAD * RPM2RAD)
-        rpm_r = v_r / (WHEEL_RAD * RPM2RAD)
+        try:
+            v_l = linear_x - (angular_z * WHEEL_BASE / 2.0)
+            v_r = linear_x + (angular_z * WHEEL_BASE / 2.0)
+            
+            rpm_l = v_l / (WHEEL_RAD * RPM2RAD)
+            rpm_r = v_r / (WHEEL_RAD * RPM2RAD)
+            rpm_l = max(min(int(rpm_l), 32767), -32768)
+            rpm_r = max(min(int(rpm_r), 32767), -32768)
 
-        self.driver.set_double_rpm(rpm_l, rpm_r)
+            self.driver.set_double_rpm(rpm_l, rpm_r)
+        except:
+            self.get_logger().warn("Failed to send motor data. rpm_l : {rpm_l}, rpm_r : {rpm_r}")
+
 
     def update_and_publish(self):
         """Periodically reads motor data, calculates odometry, and publishes topics."""
