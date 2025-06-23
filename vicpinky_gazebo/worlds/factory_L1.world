@@ -100,10 +100,69 @@
       <static>True</static>
     </include>
     <include>
+      <name>desk1</name>
+      <uri>model://desk</uri>
+      <pose>23.17 -18.32 0.0 0 0 1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk2</name>
+      <uri>model://desk</uri>
+      <pose>24.72 -18.32 0.0 0 0 1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk3</name>
+      <uri>model://desk</uri>
+      <pose>23.17 -21.15 0.0 0 0 -1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk4</name>
+      <uri>model://desk</uri>
+      <pose>24.72 -21.15 0.0 0 0 -1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk5</name>
+      <uri>model://desk</uri>
+      <pose>29.77 -18.46 0.0 0 0 1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk6</name>
+      <uri>model://desk</uri>
+      <pose>31.48 -18.46 0.0 0 0 1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk7</name>
+      <uri>model://desk</uri>
+      <pose>29.77 -21.20 0.0 0 0 -1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk8</name>
+      <uri>model://desk</uri>
+      <pose>31.48 -21.20 0.0 0 0 -1.57</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk9</name>
+      <uri>model://desk</uri>
+      <pose>35.78 -20.54 0.0 0 0 0.0</pose>
+      <static>True</static>
+    </include>
+    <include>
+      <name>desk10</name>
+      <uri>model://desk</uri>
+      <pose>35.78 -18.84 0.0 0 0 0.0</pose>
+      <static>True</static>
+    </include>
+    <include>
       <name>factory_L1</name>
       <uri>model://factory_L1</uri>
       <pose>0 0 0.01 0 0 0</pose>
     </include>
-    <rmf_charger_waypoints name="charger_waypoints" />
   </world>
 </sdf>
