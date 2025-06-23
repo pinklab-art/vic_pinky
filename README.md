@@ -28,7 +28,7 @@ sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 ## 4. rplidar 설정
-참고: <https://github.com/pinklab-art/vicpinky_ws/blob/main/doc/lidar_setup.md>
+참고: <[https://github.com/pinklab-art/vicpinky_ws/blob/main/doc/lidar_setup.md](https://github.com/pinklab-art/vic_pinky/blob/main/doc/lidar_setup.md)>
 
 ## 5. vicpinky_ws pkg build
 ```
