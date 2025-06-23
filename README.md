@@ -30,15 +30,12 @@ sudo udevadm trigger
 ## 4. rplidar 설정
 참고: <https://github.com/pinklab-art/vicpinky_ws/blob/main/doc/lidar_setup.md>
 
-## 5. IMU 설정
-참고: <https://github.com/pinklab-art/vicpinky_ws/blob/main/doc/imu_setup.md>
-
-## 6. vicpinky_ws pkg build
+## 5. vicpinky_ws pkg build
 ```
 cd ~/vicpinky_ws
 colcon build
 ```
-## 7. set bahsrc
+## 8. set bahsrc
 ```
 echo 'source ~/vicpinky_ws/install/setup.bash' >> ~/.bashrc
 source ~/.bashrc
