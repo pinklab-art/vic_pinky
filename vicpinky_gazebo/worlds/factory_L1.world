@@ -26,6 +26,12 @@
       <grid>false</grid>
     </scene>
     
+    <include>
+      <uri>
+        https://fuel.gazebosim.org/1.0/OpenRobotics/models/Ground Plane
+      </uri>
+    </include>
+    
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
@@ -96,7 +102,7 @@
     <include>
       <name>factory_L1</name>
       <uri>model://factory_L1</uri>
-      <pose>0 0 0.0 0 0 0</pose>
+      <pose>0 0 0.01 0 0 0</pose>
     </include>
     <rmf_charger_waypoints name="charger_waypoints" />
   </world>
