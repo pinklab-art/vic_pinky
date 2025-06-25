@@ -9,6 +9,7 @@ from geometry_msgs.msg import Twist, TransformStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
 from tf2_ros import TransformBroadcaster
+from tf_transformations import quaternion_from_euler
 
 # Import the driver module
 from vicpinky_bringup.zlac_driver import ZLACDriver
@@ -169,15 +170,19 @@ class ZlacRosNode(Node):
         dist_r = (delta_r_pulses / PULSE_PER_ROT) * CIRCUMFERENCE
 
         # Calculate odometry
-        delta_s = (dist_r + dist_l) / 2.0
+        delta_distance = (dist_r + dist_l) / 2.0
         delta_theta = (dist_r - dist_l) / WHEEL_BASE
-
-        self.x += delta_s * math.cos(self.theta + delta_theta / 2.0)
-        self.y += delta_s * math.sin(self.theta + delta_theta / 2.0)
         self.theta += delta_theta
+
+        # 이후, 새로 업데이트된 각도를 기준으로 위치(x, y)를 계산
+        d_x = delta_distance * math.cos(self.theta)
+        d_y = delta_distance * math.sin(self.theta)
+
+        self.x += d_x
+        self.y += d_y
         
         # Current velocities for Odometry Twist
-        v_x = delta_s / dt
+        v_x = delta_distance / dt
         vth = delta_theta / dt
 
         # Publish TF transform
@@ -199,7 +204,7 @@ class ZlacRosNode(Node):
         t.transform.translation.x = self.x
         t.transform.translation.y = self.y
         t.transform.translation.z = 0.0
-        q = self.quaternion_from_euler(0, 0, self.theta)
+        q = quaternion_from_euler(0, 0, self.theta)
         t.transform.rotation.x = q[0]
         t.transform.rotation.y = q[1]
         t.transform.rotation.z = q[2]
@@ -215,7 +220,7 @@ class ZlacRosNode(Node):
         odom_msg.pose.pose.position.x = self.x
         odom_msg.pose.pose.position.y = self.y
         
-        q = self.quaternion_from_euler(0, 0, self.theta)
+        q = quaternion_from_euler(0, 0, self.theta)
         odom_msg.pose.pose.orientation.x = q[0]
         odom_msg.pose.pose.orientation.y = q[1]
         odom_msg.pose.pose.orientation.z = q[2]
@@ -240,20 +245,6 @@ class ZlacRosNode(Node):
         joint_msg.velocity = [vel_l_rads, vel_r_rads]
         self.joint_pub.publish(joint_msg)
 
-    def quaternion_from_euler(self, roll, pitch, yaw):
-        cy = math.cos(yaw * 0.5)
-        sy = math.sin(yaw * 0.5)
-        cp = math.cos(pitch * 0.5)
-        sp = math.sin(pitch * 0.5)
-        cr = math.cos(roll * 0.5)
-        sr = math.sin(roll * 0.5)
-        q = [0.0] * 4
-        q[0] = sr * cp * cy - cr * sp * sy  # x
-        q[1] = cr * sp * cy + sr * cp * sy  # y
-        q[2] = cr * cp * sy - sr * sp * cy  # z
-        q[3] = cr * cp * cy + sr * sp * sy  # w
-        return q
-
     def on_shutdown(self):
         """Called upon node shutdown."""
         self.get_logger().info("Shutting down, terminating motor driver...")
@@ -272,7 +263,6 @@ def main(args=None):
         pass
     finally:
         if node:
-            # Check if the node has the 'is_initialized' attribute before accessing it
             if hasattr(node, 'is_initialized') and node.is_initialized:
                 node.on_shutdown()
             if not node.is_destroyed():
