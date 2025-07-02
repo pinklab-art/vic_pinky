@@ -79,7 +79,7 @@ ros2 launch vicpinky_navigation map_building.launch.xml
 ```
 ros2 launch vicpinky_navigation map_view.launch.xml
 ```
-#### robot control
+#### robot keyborad control
 ```
 ros2 run teleop_twist_keyboard teleop_twist_keyboard 
 ```
@@ -89,25 +89,47 @@ ros2 run nav2_map_server map_saver_cli -f <map name>
 ```
 
 ## Navigation2 
-#### launch cartographer
+#### launch navigation2
 ```
-ros2 launch pinky_navigation bringup_launch.xml map:=<map name>
+ros2 launch vicpinky_navigation bringup_launch.xml map:=<map name>
 ```
-or (set initial pose)
-```
-ros2 launch pinky_navigation initialpose_bringup_launch.xml map:=<map name>
-```
+
 #### [ONLY PC] nav2 view
 ```
-ros2 launch pinky_navigation nav2_view.launch.xml
+ros2 launch vicpinky_navigation nav2_view.launch.xml
 ```
 
 # 시뮬레이션
-#### start emotion server
+## Vic pinky gazebo 실행
 ```
-ros2 run pinky_emotion pinky_emotion
+ros2 launch pinky_bringup gazebo_bringup.launch.xml
 ```
-#### set emotion
+
+## Map building
+#### launch slam toolbox
 ```
-ros2 service call /set_emotion pinky_interfaces/srv/Emotion "{emotion: hello}"
+ros2 launch vicpinky_navigation map_building.launch.xml use_sim_time:=true
+```
+#### [ONLY PC] map view 
+```
+ros2 launch vicpinky_navigation map_view.launch.xml
+```
+#### robot keyborad control
+```
+ros2 run teleop_twist_keyboard teleop_twist_keyboard 
+```
+#### map save 
+```
+ros2 run nav2_map_server map_saver_cli -f <map name>
+```
+
+## Navigation2 
+#### launch navigation2
+```
+ros2 launch vicpinky_navigation bringup_launch.xml map:=<map name> use_sim_time:=true
+```
+
+#### [ONLY PC] nav2 view
+```
+ros2 launch vicpinky_navigation nav2_view.launch.xml
 ```
