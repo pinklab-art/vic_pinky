@@ -1,10 +1,31 @@
 # vic_pinky
 <img src="/doc/image.png" width="40%" height="30%" title="vicpinky" alt="vicpinky"></img>
 
+# PC 설정
+## 환경
+- ubuntu 24.04
+- ros2 jazzy
+## 1. pinky ROS2 pkg clone
+```
+mkdir -p ~/pinky_violet/src
+cd ~/pinky_violet/src
+git clone https://github.com/pinklab-art/pinky_violet.git
+```
+## 2. dependence 설치
+```
+cd ~/pinky_violet
+rosdep install --from-paths src --ignore-src -r -y
+```
+## 3. build
+```
+cd ~/pinky_violet
+colcon build
+```
+
 # ROBOT 설정
 ## 환경
-- ubuntu 22.04
-- ros2 humble
+- ubuntu 24.04
+- ros2 jazzy
 ## 1. vicpinky ROS2 pkg clone
 ```
 mkdir -p ~/vicpinky_ws/src
@@ -40,8 +61,53 @@ colcon build
 echo 'source ~/vicpinky_ws/install/setup.bash' >> ~/.bashrc
 source ~/.bashrc
 ```
-# Vic Pinky brinup
 
+
+# Vic Pinky 사용 매뉴얼
+
+## Vic pinky 실행
 ```
-ros2 launch vicpinky_bringup bringup.launch.xml
+ros2 launch pinky_bringup bringup.launch.xml
+```
+
+## Map building
+#### launch slam toolbox
+```
+ros2 launch vicpinky_navigation map_building.launch.xml
+```
+#### [ONLY PC] map view 
+```
+ros2 launch vicpinky_navigation map_view.launch.xml
+```
+#### robot control
+```
+ros2 run teleop_twist_keyboard teleop_twist_keyboard 
+```
+#### map save 
+```
+ros2 run nav2_map_server map_saver_cli -f <map name>
+```
+
+## Navigation2 
+#### launch cartographer
+```
+ros2 launch pinky_navigation bringup_launch.xml map:=<map name>
+```
+or (set initial pose)
+```
+ros2 launch pinky_navigation initialpose_bringup_launch.xml map:=<map name>
+```
+#### [ONLY PC] nav2 view
+```
+ros2 launch pinky_navigation nav2_view.launch.xml
+```
+
+# 시뮬레이션
+#### start emotion server
+```
+ros2 run pinky_emotion pinky_emotion
+```
+#### set emotion
+```
+ros2 service call /set_emotion pinky_interfaces/srv/Emotion "{emotion: hello}"
 ```
