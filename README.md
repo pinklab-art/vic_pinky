@@ -5,7 +5,7 @@
 ## 환경
 - ubuntu 24.04
 - ros2 jazzy
-## 1. pinky ROS2 pkg clone
+## 1. Vic Pinky ROS2 pkg clone
 ```
 mkdir -p ~/pinky_violet/src
 cd ~/pinky_violet/src
@@ -26,7 +26,7 @@ colcon build
 ## 환경
 - ubuntu 24.04
 - ros2 jazzy
-## 1. vicpinky ROS2 pkg clone
+## 1. Vic pinky ROS2 pkg clone
 ```
 mkdir -p ~/vicpinky_ws/src
 cd ~/vicpinky_ws/src
