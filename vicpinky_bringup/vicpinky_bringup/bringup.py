@@ -137,8 +137,8 @@ class VicPinky(Node):
             
             rpm_l = v_l / (WHEEL_RAD * RPM2RAD)
             rpm_r = v_r / (WHEEL_RAD * RPM2RAD)
-            rpm_l = max(min(int(rpm_l), 32767), -32768)
-            rpm_r = max(min(int(rpm_r), 32767), -32768)
+            rpm_l = max(min(int(rpm_l), 28), -28)
+            rpm_r = max(min(int(rpm_r), 28), -28)
 
             self.driver.set_double_rpm(rpm_l, rpm_r)
         except:
