@@ -248,6 +248,7 @@ class VicPinky(Node):
     def on_shutdown(self):
         """Called upon node shutdown."""
         self.get_logger().info("Shutting down, terminating motor driver...")
+        self.driver.set_double_rpm(0, 0)
         # Check if driver was initialized before trying to terminate
         if hasattr(self, 'driver') and self.driver:
             self.driver.terminate()
