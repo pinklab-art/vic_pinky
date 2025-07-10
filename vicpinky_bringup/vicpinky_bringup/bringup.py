@@ -266,8 +266,7 @@ def main(args=None):
         if node:
             if hasattr(node, 'is_initialized') and node.is_initialized:
                 node.on_shutdown()
-            if not node.is_destroyed():
-                 node.destroy_node()
+                node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
 
