@@ -39,15 +39,15 @@ RPM2RAD = 0.104719755
 CIRCUMFERENCE = 2 * math.pi * WHEEL_RAD
 
 
-class ZlacRosNode(Node):
+class VicPinky(Node):
     """
     ROS 2 Node that uses the ZLACDriver module to control the robot.
     """
     def __init__(self):
-        super().__init__('zlac_ros_node')
+        super().__init__('vic_pinky_bringup')
         self.is_initialized = False # 초기화 성공 여부 플래그
 
-        self.get_logger().info('Initializing ZLAC ROS 2 Node...')
+        self.get_logger().info('Initializing Vic Pinky Bringup Node...')
         
         # Initialize the low-level driver
         self.driver = ZLACDriver(SERIAL_PORT_NAME, BAUDRATE, MODBUS_ID)
@@ -123,7 +123,7 @@ class ZlacRosNode(Node):
         self.last_time = self.get_clock().now()
 
         self.is_initialized = True # 모든 초기화 성공
-        self.get_logger().info('ZLAC ROS 2 Node has been started successfully.')
+        self.get_logger().info('Vic Pinky Bringup has been started successfully.')
 
     def twist_callback(self, msg: Twist):
         """Callback for receiving Twist messages."""
@@ -256,7 +256,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = None
     try:
-        node = ZlacRosNode()
+        node = VicPinky()
         if hasattr(node, 'is_initialized') and node.is_initialized:
             rclpy.spin(node)
     except KeyboardInterrupt:
