@@ -32,12 +32,17 @@ mkdir -p ~/vicpinky_ws/src
 cd ~/vicpinky_ws/src
 git clone https://github.com/pinklab-art/vic_pinky.git
 ````
-## 2. dependence 설치
+## 2. 가제보 패키지 삭제
+```
+cd vic_pinky
+sudo rm -r vicpinky_gazebo/
+````
+## 3. dependence 설치
 ```
 cd ~/vicpinky_ws
 rosdep install --from-paths src --ignore-src -r -y
 ```
-## 3. udev 설정
+## 4. udev 설정
 #### rulse 파일 복사
 ```
 cd ~/vicpinky_ws/src/vic_pinky/doc
@@ -48,15 +53,15 @@ sudo cp ./99-vic-pinky.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
-## 4. rplidar 설정
+## 5. rplidar 설정
 참고: <[https://github.com/pinklab-art/vicpinky_ws/blob/main/doc/lidar_setup.md](https://github.com/pinklab-art/vic_pinky/blob/main/doc/lidar_setup.md)>
 
-## 5. vicpinky_ws pkg build
+## 6. vicpinky pkg build
 ```
 cd ~/vicpinky_ws
 colcon build
 ```
-## 8. set bahsrc
+## 7. set bahsrc
 ```
 echo 'source ~/vicpinky_ws/install/setup.bash' >> ~/.bashrc
 source ~/.bashrc
@@ -67,7 +72,7 @@ source ~/.bashrc
 
 ## Vic pinky 실행
 ```
-ros2 launch pinky_bringup bringup.launch.xml
+ros2 launch vicpinky_bringup bringup.launch.xml
 ```
 
 ## Map building
