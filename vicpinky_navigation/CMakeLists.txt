@@ -26,7 +26,7 @@ endif()
 find_package(slam_toolbox REQUIRED)
 
 install(
-  DIRECTORY launch map params rviz
+  DIRECTORY launch rviz
   DESTINATION share/${PROJECT_NAME}
 )
 
