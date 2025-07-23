@@ -1,0 +1,31 @@
+<?xml version='1.0' ?>
+
+<launch>
+    <arg name="use_sim_time" default="False"/>
+    <arg name="filter_yaml_path" default="$(find-pkg-share vicpinky_bringup)/config/laser_filter.yaml" />
+    <arg name="robot_name" default="$(var namespace)/pinky"/>
+    <arg name="namespace" default=""/>
+    <arg name="x" default="0.0"/>
+    <arg name="y" default="0.0"/>
+    <arg name="z" default="0.1"/>
+    <arg name="R" default="0.0"/>
+    <arg name="P" default="0.0"/>
+    <arg name="Y" default="0.0"/>
+
+
+    <include file="$(find-pkg-share vicpinky_gazebo)/launch/spawn.launch.xml">
+        <arg name="use_sim_time" value="$(var use_sim_time)"/>
+        <arg name="namespace" value="$(var namespace)"/>
+        <arg name="x" value="$(var x)"/>
+        <arg name="y" value="$(var y)"/>
+        <arg name="z" value="$(var z)"/>
+        <arg name="R" value="$(var R)"/>
+        <arg name="P" value="$(var P)"/>
+        <arg name="Y" value="$(var Y)"/>
+    </include>
+    
+    <node pkg="laser_filters" exec="scan_to_scan_filter_chain" namespace="$(var namespace)">
+        <param from="$(var filter_yaml_path)" />
+    </node>
+
+</launch>
