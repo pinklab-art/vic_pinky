@@ -106,10 +106,14 @@ ros2 launch vicpinky_navigation nav2_view.launch.xml
 
 # 시뮬레이션
 ## Vic pinky gazebo 실행
+#### 가제보 실행 및 vicpinky 스폰
 ```
-ros2 launch pinky_bringup gazebo_bringup.launch.xml
+ros2 launch vicpinky_bringup gazebo_bringup.launch.xml
 ```
-
+#### (Optional) 멀티 vicpinky 스폰
+```
+ros2 launch vicpinky_bringup gazebo_multi_spwan.launch.xml namespace:=robot2 x:=12.0 y:=-16.0
+```
 ## Map building
 #### launch slam toolbox
 ```
