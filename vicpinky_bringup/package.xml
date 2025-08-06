@@ -14,7 +14,8 @@
   
   <depend>tf_transformations</depend>
   <depend>laser_filters</depend>
-  <depend>pyseiral</depend>
+  
+  <depend>pyserial</depend>
 
   <export>
     <build_type>ament_python</build_type>
