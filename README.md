@@ -7,18 +7,18 @@
 - ros2 jazzy
 ## 1. Vic Pinky ROS2 pkg clone
 ```
-mkdir -p ~/pinky_violet/src
-cd ~/pinky_violet/src
+mkdir -p ~/vicpinky_ws/src
+cd ~/vicpinky_ws/src
 git clone https://github.com/pinklab-art/pinky_violet.git
 ```
 ## 2. dependence 설치
 ```
-cd ~/pinky_violet
+cd ~/vicpinky_ws
 rosdep install --from-paths src --ignore-src -r -y
 ```
 ## 3. build
 ```
-cd ~/pinky_violet
+cd ~/vicpinky_ws
 colcon build
 ```
 
