@@ -1,7 +1,7 @@
 <?xml version='1.0' ?>
 
 <launch>
-    <arg name="robot_name" default="pinky"/>
+    <arg name="robot_name" default="vicpinky"/>
     <arg name="world_name" default="factory_L1.world"/>
     <arg name="world" default="$(find-pkg-share vicpinky_gazebo)/worlds/$(var world_name)"/>
     <arg name="bridge_params" default="$(find-pkg-share vicpinky_gazebo)/params/pinky_bridge.yaml"/>

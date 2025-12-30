@@ -7,7 +7,7 @@
         <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
             <left_joint>${prefix}left_wheel_joint</left_joint>
             <right_joint>${prefix}right_wheel_joint</right_joint>
-            <wheel_separation>0.425</wheel_separation>
+            <wheel_separation>0.3788</wheel_separation>
             <wheel_radius>0.0825</wheel_radius>
 
             <min_velocity>-1.0</min_velocity>
