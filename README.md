@@ -9,7 +9,7 @@
 ```
 mkdir -p ~/vicpinky_ws/src
 cd ~/vicpinky_ws/src
-git clone https://github.com/pinklab-art/pinky_violet.git
+git clone https://github.com/pinklab-art/vic_pinky.git
 ```
 ## 2. dependence 설치
 ```
