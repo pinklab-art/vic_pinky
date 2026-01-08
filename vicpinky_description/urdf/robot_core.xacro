@@ -29,7 +29,7 @@
         <color rgba="1 1 1 1" />
     </material>
     <material name="gray">
-        <color rgba="0.2 0.2 0.2 1" />
+        <color rgba="0.4 0.4 0.4 1" />
     </material>
     <material name="black">
         <color rgba="0 0 0 1"/>
