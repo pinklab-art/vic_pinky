@@ -1,5 +1,5 @@
 # vic_pinky
-<img src="/doc/image.png" width="40%" height="30%" title="vicpinky" alt="vicpinky"></img>
+<img src="/doc/img.png" width="40%" height="30%" title="vicpinky" alt="vicpinky"></img>
 
 # PC 설정
 ## 환경
