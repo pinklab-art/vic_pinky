@@ -1,8 +1,12 @@
 <?xml version='1.0' ?>
-
 <launch>
     <arg name="use_sim_time" default="False"/>
     <arg name="filter_yaml_path" default="$(find-pkg-share vicpinky_bringup)/config/laser_filter.yaml" />
+
+    <arg name="accel_limit" default="0.4"/>
+    <arg name="decel_limit" default="1.0"/>
+    <arg name="ang_accel_limit" default="1.0"/>
+    <arg name="ang_decel_limit" default="1.5"/>
 
     <include file="$(find-pkg-share vicpinky_description)/launch/upload.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)"/>
@@ -12,6 +16,10 @@
     </include>
 
     <node pkg="vicpinky_bringup" exec="bringup">
+        <param name='accel_limit' value='$(var accel_limit)'/>
+        <param name='decel_limit' value='$(var decel_limit)'/>
+        <param name='ang_accel_limit' value='$(var ang_accel_limit)'/>
+        <param name='ang_accel_limit' value='$(var ang_decel_limit)'/>
     </node>
     
     <node pkg="laser_filters" exec="scan_to_scan_filter_chain">

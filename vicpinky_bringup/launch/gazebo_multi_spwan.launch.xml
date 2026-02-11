@@ -3,7 +3,7 @@
 <launch>
     <arg name="use_sim_time" default="False"/>
     <arg name="filter_yaml_path" default="$(find-pkg-share vicpinky_bringup)/config/laser_filter.yaml" />
-    <arg name="robot_name" default="$(var namespace)/pinky"/>
+    <arg name="robot_name" default="$(var namespace)/vicpinky"/>
     <arg name="namespace" default=""/>
     <arg name="x" default="0.0"/>
     <arg name="y" default="0.0"/>

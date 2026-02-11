@@ -15,48 +15,57 @@ from tf_transformations import quaternion_from_euler
 from vicpinky_bringup.zlac_driver import ZLACDriver
 
 # --- Configuration Constants ---
-# Topic and Frame Names
 TWIST_SUB_TOPIC_NAME = "cmd_vel"
 ODOM_PUB_TOPIC_NAME = "odom"
 JOINT_PUB_TOPIC_NAME = "joint_states"
 ODOM_FRAME_ID = "odom"
 ODOM_CHILD_FRAME_ID = "base_footprint"
 
-# Serial Port Settings
 SERIAL_PORT_NAME = "/dev/motor"
 BAUDRATE = 115200
 MODBUS_ID = 0x01
 
-# Robot Joint Names
 JOINT_NAME_WHEEL_L = "left_wheel_joint"
 JOINT_NAME_WHEEL_R = "right_wheel_joint"
 
-# Robot Specs
 WHEEL_RAD = 0.0825
 PULSE_PER_ROT = 4096
-WHEEL_BASE = 0.475
+WHEEL_BASE = 0.4288
 RPM2RAD = 0.104719755
 CIRCUMFERENCE = 2 * math.pi * WHEEL_RAD
 
 
 class VicPinky(Node):
-    """
-    ROS 2 Node that uses the ZLACDriver module to control the robot.
-    """
     def __init__(self):
         super().__init__('vic_pinky_bringup')
-        self.is_initialized = False # 초기화 성공 여부 플래그
+        self.is_initialized = False
 
         self.get_logger().info('Initializing Vic Pinky Bringup Node...')
         
-        # Initialize the low-level driver
+        # --- Parameters for Acceleration/Deceleration ---
+        self.declare_parameter('accel_limit', 0.4)    
+        self.declare_parameter('decel_limit', 1.0)
+        
+        self.declare_parameter('ang_accel_limit', 1.0)
+        self.declare_parameter('ang_decel_limit', 1.5)
+
+        self.accel = self.get_parameter('accel_limit').value
+        self.decel = self.get_parameter('decel_limit').value
+        
+        self.ang_accel = self.get_parameter('ang_accel_limit').value
+        self.ang_decel = self.get_parameter('ang_decel_limit').value
+
+        self.target_linear_x = 0.0
+        self.target_angular_z = 0.0
+        self.current_linear_x = 0.0
+        self.current_angular_z = 0.0
+        
         self.driver = ZLACDriver(SERIAL_PORT_NAME, BAUDRATE, MODBUS_ID)
         
-        # --- 안정성을 위해 초기화 과정을 단계별로 실행 ---
         self.get_logger().info("1. Opening serial port...")
         if not self.driver.begin():
             self.get_logger().error("Failed to open serial port! Shutting down.")
-            return # __init__ 종료
+            return
         time.sleep(0.1)
 
         self.get_logger().info("2. Setting velocity mode...")
@@ -84,7 +93,6 @@ class VicPinky(Node):
         self.get_logger().info(f"Initial RPM read: L={rpm_l}, R={rpm_r}. Controller is responsive.")
         time.sleep(0.1)
 
-
         self.get_logger().info("5. Setting initial RPM to zero (with retries)...")
         max_retries = 3
         success = False
@@ -101,7 +109,6 @@ class VicPinky(Node):
             self.driver.terminate()
             return
         
-        # Get initial encoder values to calculate the difference later
         self.get_logger().info("6. Reading initial encoder values...")
         self.last_encoder_l, self.last_encoder_r = self.driver.get_position()
         if self.last_encoder_l is None or self.last_encoder_r is None:
@@ -109,90 +116,118 @@ class VicPinky(Node):
             self.driver.terminate()
             return
             
-        # Create ROS publishers, subscribers, and TF broadcaster
         self.odom_pub = self.create_publisher(Odometry, ODOM_PUB_TOPIC_NAME, 10)
         self.joint_pub = self.create_publisher(JointState, JOINT_PUB_TOPIC_NAME, 10)
         self.twist_sub = self.create_subscription(Twist, TWIST_SUB_TOPIC_NAME, self.twist_callback, 10)
         self.tf_broadcaster = TransformBroadcaster(self)
-        self.timer = self.create_timer(1.0 / 30.0, self.update_and_publish) # 30Hz loop
+        self.timer = self.create_timer(1.0 / 30.0, self.update_and_publish)
 
-        # Odometry calculation variables
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
         self.last_time = self.get_clock().now()
 
-        self.is_initialized = True # 모든 초기화 성공
+        self.is_initialized = True
         self.get_logger().info('Vic Pinky Bringup has been started successfully.')
 
     def twist_callback(self, msg: Twist):
-        """Callback for receiving Twist messages."""
-        linear_x = msg.linear.x
-        angular_z = msg.angular.z
-
-        # Inverse Kinematics: Convert Twist to RPM for each wheel
-        try:
-            v_l = linear_x - (angular_z * WHEEL_BASE / 2.0)
-            v_r = linear_x + (angular_z * WHEEL_BASE / 2.0)
-            
-            rpm_l = v_l / (WHEEL_RAD * RPM2RAD)
-            rpm_r = v_r / (WHEEL_RAD * RPM2RAD)
-            rpm_l = max(min(int(rpm_l), 28), -28)
-            rpm_r = max(min(int(rpm_r), 28), -28)
-
-            self.driver.set_double_rpm(rpm_l, rpm_r)
-        except:
-            self.get_logger().warn("Failed to send motor data. rpm_l : {rpm_l}, rpm_r : {rpm_r}")
-
+        self.target_linear_x = msg.linear.x
+        self.target_angular_z = msg.angular.z
 
     def update_and_publish(self):
-        """Periodically reads motor data, calculates odometry, and publishes topics."""
         current_time = self.get_clock().now()
         dt = (current_time - self.last_time).nanoseconds / 1e9
+        
         if dt <= 0:
             return
 
-        rpm_l, rpm_r = self.driver.get_rpm()
+        rpm_l_fb, rpm_r_fb = self.driver.get_rpm()
         encoder_l, encoder_r = self.driver.get_position()
 
-        if rpm_l is None or encoder_l is None:
-            self.get_logger().warn("Failed to read motor data. Skipping this update cycle.")
+        if rpm_l_fb is None or encoder_l is None:
+            self.last_time = current_time
             return
 
-        # Calculate distance traveled from encoder delta
-        delta_l_pulses = encoder_l - self.last_encoder_l
-        delta_r_pulses = encoder_r - self.last_encoder_r
+        delta_l = encoder_l - self.last_encoder_l
+        delta_r = encoder_r - self.last_encoder_r
         
         self.last_encoder_l = encoder_l
         self.last_encoder_r = encoder_r
 
-        dist_l = (delta_l_pulses / PULSE_PER_ROT) * CIRCUMFERENCE
-        dist_r = (delta_r_pulses / PULSE_PER_ROT) * CIRCUMFERENCE
+        dist_l = (delta_l / PULSE_PER_ROT) * CIRCUMFERENCE
+        dist_r = (delta_r / PULSE_PER_ROT) * CIRCUMFERENCE
 
-        # Calculate odometry
-        delta_distance = (dist_r + dist_l) / 2.0
-        delta_theta = (dist_r - dist_l) / WHEEL_BASE
-        self.theta += delta_theta
+        delta_dist = (dist_r + dist_l) / 2.0
+        delta_th = (dist_r - dist_l) / WHEEL_BASE
 
-        # 이후, 새로 업데이트된 각도를 기준으로 위치(x, y)를 계산
-        d_x = delta_distance * math.cos(self.theta)
-        d_y = delta_distance * math.sin(self.theta)
-
-        self.x += d_x
-        self.y += d_y
+        self.theta += delta_th
+        self.x += delta_dist * math.cos(self.theta)
+        self.y += delta_dist * math.sin(self.theta)
         
-        # Current velocities for Odometry Twist
-        v_x = delta_distance / dt
-        vth = delta_theta / dt
+        v_x = delta_dist / dt
+        vth = delta_th / dt
 
-        # Publish TF transform
+        accel = self.get_parameter('accel_limit').value
+        decel = self.get_parameter('decel_limit').value
+        ang_accel = self.get_parameter('ang_accel_limit').value
+        ang_decel = self.get_parameter('ang_decel_limit').value
+
+        if abs(self.target_linear_x) < abs(v_x):
+            step = decel * dt
+        elif (self.target_linear_x * v_x) < 0:
+            step = decel * dt
+        else:
+            step = accel * dt
+
+        if v_x < self.target_linear_x:
+            self.cmd_linear_x = min(self.target_linear_x, v_x + step)
+        elif v_x > self.target_linear_x:
+            self.cmd_linear_x = max(self.target_linear_x, v_x - step)
+        else:
+            self.cmd_linear_x = self.target_linear_x
+
+        if abs(self.target_angular_z) < abs(vth):
+            step = ang_decel * dt
+        elif (self.target_angular_z * vth) < 0:
+            step = ang_decel * dt
+        else:
+            step = ang_accel * dt
+
+        if vth < self.target_angular_z:
+            self.cmd_angular_z = min(self.target_angular_z, vth + step)
+        elif vth > self.target_angular_z:
+            self.cmd_angular_z = max(self.target_angular_z, vth - step)
+        else:
+            self.cmd_angular_z = self.target_angular_z
+
+        try:
+            v_l = self.cmd_linear_x - (self.cmd_angular_z * WHEEL_BASE / 2.0)
+            v_r = self.cmd_linear_x + (self.cmd_angular_z * WHEEL_BASE / 2.0)
+            
+            rpm_l_raw = v_l / (WHEEL_RAD * RPM2RAD)
+            rpm_r_raw = v_r / (WHEEL_RAD * RPM2RAD)
+            
+            max_rpm_limit = 28.0
+            max_req = max(abs(rpm_l_raw), abs(rpm_r_raw))
+            
+            if max_req > max_rpm_limit:
+                scale = max_rpm_limit / max_req
+                rpm_l_raw *= scale
+                rpm_r_raw *= scale
+
+            rpm_l = int(rpm_l_raw)
+            rpm_r = int(rpm_r_raw)
+            
+            rpm_l = max(min(rpm_l, max_rpm_limit), -max_rpm_limit)
+            rpm_r = max(min(rpm_r, max_rpm_limit), -max_rpm_limit)
+
+            self.driver.set_double_rpm(rpm_l, rpm_r)
+        except:
+            pass
+
         self._publish_tf(current_time)
-        
-        # Publish Odometry message
         self._publish_odometry(current_time, v_x, vth)
-
-        # Publish JointState message
-        self._publish_joint_states(current_time, vel_l_rads=rpm_l * RPM2RAD, vel_r_rads=rpm_r * RPM2RAD)
+        self._publish_joint_states(current_time, rpm_l_fb * RPM2RAD, rpm_r_fb * RPM2RAD)
 
         self.last_time = current_time
 
@@ -229,7 +264,6 @@ class VicPinky(Node):
         odom_msg.twist.twist.linear.x = v_x
         odom_msg.twist.twist.angular.z = vth
         
-        # Odometry Covariance
         odom_msg.pose.covariance = [0.1] * 36
         odom_msg.twist.covariance = [0.1] * 36
         self.odom_pub.publish(odom_msg)
@@ -246,11 +280,9 @@ class VicPinky(Node):
         self.joint_pub.publish(joint_msg)
 
     def on_shutdown(self):
-        """Called upon node shutdown."""
         self.get_logger().info("Shutting down, terminating motor driver...")
-        self.driver.set_double_rpm(0, 0)
-        # Check if driver was initialized before trying to terminate
         if hasattr(self, 'driver') and self.driver:
+            self.driver.set_double_rpm(0, 0)
             self.driver.terminate()
 
 def main(args=None):
