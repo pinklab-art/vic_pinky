@@ -11,15 +11,6 @@
         <param name="port" value="$(var port)"/>
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
-
-    <!--
-        SLAM(mapping) 모드에서는 slam_toolbox가 map->odom TF와 지도를 모두 제공한다.
-        따라서 AMCL/map_server(localization 스택)는 띄우면 안 된다.
-        과거에 bringup_launch.xml(AMCL 포함)을 함께 include하면서 AMCL과 slam_toolbox가
-        동시에 map->odom 를 publish해 TF가 충돌, 웹에서 로봇 위치가 두 값 사이를
-        오가는 버그가 있었다. (로봇이 0,0에 있을 때만 두 추정값이 우연히 일치해 정상처럼 보였음)
-        navigation_launch.xml만 include해 goal 전송용 nav2 서버만 띄운다.
-    -->
     <include file="$(find-pkg-share vicpinky_navigation)/launch/navigation_launch.xml">
         <arg name="params_file" value="$(var params_file)"/>
         <arg name="use_sim_time" value="$(var use_sim_time)"/>
