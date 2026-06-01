@@ -48,7 +48,7 @@ class VicPinky(Node):
         
         # --- Parameters for Acceleration/Deceleration ---
         self.declare_parameter('accel_limit', 0.4)    
-        self.declare_parameter('decel_limit', 1.0)
+        self.declare_parameter('decel_limit', 0.5)
         
         self.declare_parameter('ang_accel_limit', 1.0)
         self.declare_parameter('ang_decel_limit', 1.5)

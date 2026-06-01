@@ -4,7 +4,7 @@
     <arg name="filter_yaml_path" default="$(find-pkg-share vicpinky_bringup)/config/laser_filter.yaml" />
 
     <arg name="accel_limit" default="0.4"/>
-    <arg name="decel_limit" default="1.0"/>
+    <arg name="decel_limit" default="0.5"/>
     <arg name="ang_accel_limit" default="1.0"/>
     <arg name="ang_decel_limit" default="1.5"/>
 
