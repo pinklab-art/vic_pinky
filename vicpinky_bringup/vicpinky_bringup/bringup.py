@@ -34,6 +34,10 @@ WHEEL_BASE = 0.4288
 RPM2RAD = 0.104719755
 CIRCUMFERENCE = 2 * math.pi * WHEEL_RAD
 
+# Must match the max RPM configured in the ZLAC driver.
+# The driver rejects speed commands above this, so never send more.
+MAX_MOTOR_RPM = 100.0
+
 
 class VicPinky(Node):
     def __init__(self):
@@ -254,19 +258,18 @@ class VicPinky(Node):
             rpm_l_raw = v_l / (WHEEL_RAD * RPM2RAD)
             rpm_r_raw = v_r / (WHEEL_RAD * RPM2RAD)
             
-            max_rpm_limit = 28.0
             max_req = max(abs(rpm_l_raw), abs(rpm_r_raw))
-            
-            if max_req > max_rpm_limit:
-                scale = max_rpm_limit / max_req
+
+            if max_req > MAX_MOTOR_RPM:
+                scale = MAX_MOTOR_RPM / max_req
                 rpm_l_raw *= scale
                 rpm_r_raw *= scale
 
             rpm_l = int(rpm_l_raw)
             rpm_r = int(rpm_r_raw)
-            
-            rpm_l = max(min(rpm_l, max_rpm_limit), -max_rpm_limit)
-            rpm_r = max(min(rpm_r, max_rpm_limit), -max_rpm_limit)
+
+            rpm_l = max(min(rpm_l, MAX_MOTOR_RPM), -MAX_MOTOR_RPM)
+            rpm_r = max(min(rpm_r, MAX_MOTOR_RPM), -MAX_MOTOR_RPM)
 
             self.driver.set_double_rpm(rpm_l, rpm_r)
         except:
