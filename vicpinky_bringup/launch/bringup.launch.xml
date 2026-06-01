@@ -8,6 +8,13 @@
     <arg name="ang_accel_limit" default="1.0"/>
     <arg name="ang_decel_limit" default="1.5"/>
 
+    <arg name="max_linear_speed" default="0.25"/>
+    <arg name="max_angular_speed" default="1.0"/>
+
+    <arg name="vel_lead_limit" default="0.15"/>
+    <arg name="ang_vel_lead_limit" default="0.3"/>
+    <arg name="cmd_vel_timeout" default="0.5"/>
+
     <include file="$(find-pkg-share vicpinky_description)/launch/upload.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)"/>
     </include>
@@ -19,7 +26,12 @@
         <param name='accel_limit' value='$(var accel_limit)'/>
         <param name='decel_limit' value='$(var decel_limit)'/>
         <param name='ang_accel_limit' value='$(var ang_accel_limit)'/>
-        <param name='ang_accel_limit' value='$(var ang_decel_limit)'/>
+        <param name='ang_decel_limit' value='$(var ang_decel_limit)'/>
+        <param name='max_linear_speed' value='$(var max_linear_speed)'/>
+        <param name='max_angular_speed' value='$(var max_angular_speed)'/>
+        <param name='vel_lead_limit' value='$(var vel_lead_limit)'/>
+        <param name='ang_vel_lead_limit' value='$(var ang_vel_lead_limit)'/>
+        <param name='cmd_vel_timeout' value='$(var cmd_vel_timeout)'/>
     </node>
     
     <node pkg="laser_filters" exec="scan_to_scan_filter_chain">
