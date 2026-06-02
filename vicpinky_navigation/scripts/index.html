@@ -376,6 +376,42 @@
       border-color: var(--accent);
     }
 
+    .btn-danger {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .nav-status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .nav-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #64748b;
+      flex-shrink: 0;
+    }
+
+    .nav-status-dot.active {
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+    }
+
     .slam-status {
       font-size: 11px;
       color: var(--text-muted);
@@ -464,6 +500,23 @@
     </div>
   </div>
 
+  <!-- Nav2 주행 제어 카드 -->
+  <div class="panel-card">
+    <div class="section-title">Nav2 Navigation</div>
+    <div class="nav-status-row">
+      <span id="navStatusDot" class="nav-status-dot"></span>
+      <span id="navStatusText">상태 확인 중...</span>
+    </div>
+    <div class="slam-actions">
+      <button id="btnNavStop" class="btn btn-danger" disabled>
+        ■ Stop
+      </button>
+    </div>
+    <div id="navStopStatus" class="slam-status">
+      <!-- 정지 요청 결과 메시지 -->
+    </div>
+  </div>
+
   <!-- SLAM Mapping 카드 -->
   <div class="panel-card">
     <div class="section-title">SLAM Mapping (slam_toolbox)</div>
@@ -535,6 +588,51 @@ const slamStatusEl = document.getElementById("slamStatus");
 const mapNameInput = document.getElementById("mapNameInput");
 const btnSlamReset = document.getElementById("btnSlamReset");
 const btnSlamSave = document.getElementById("btnSlamSave");
+
+// Nav2 제어 UI 요소
+const navStatusDot = document.getElementById("navStatusDot");
+const navStatusText = document.getElementById("navStatusText");
+const btnNavStop = document.getElementById("btnNavStop");
+const navStopStatusEl = document.getElementById("navStopStatus");
+
+// Nav2 주행 상태 표시 갱신
+function updateNavStatus(navigating) {
+  if (navigating) {
+    navStatusDot.classList.add("active");
+    navStatusText.textContent = "주행 중 (Navigating)";
+    btnNavStop.disabled = false;
+  } else {
+    navStatusDot.classList.remove("active");
+    navStatusText.textContent = "대기 중 (Idle)";
+    btnNavStop.disabled = true;
+  }
+}
+
+// Stop 버튼: 현재 Nav2 goal 취소
+btnNavStop.addEventListener("click", async () => {
+  navStopStatusEl.classList.remove("ok", "err");
+  navStopStatusEl.textContent = "정지 요청 중...";
+
+  try {
+    const res = await fetch("/api/nav/stop", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    if (data.success) {
+      navStopStatusEl.classList.add("ok");
+      navStopStatusEl.textContent = "정지 요청을 보냈습니다.";
+    } else {
+      navStopStatusEl.classList.add("err");
+      navStopStatusEl.textContent = "정지 요청 실패: " + (data.msg || "");
+    }
+  } catch (e) {
+    console.error(e);
+    navStopStatusEl.classList.add("err");
+    navStopStatusEl.textContent = "정지 요청 중 오류가 발생했습니다.";
+  }
+});
 
 // 토글 이벤트 연결
 document.getElementById("toggleGlobal").addEventListener("change", (e) => {
@@ -617,6 +715,8 @@ async function fetchState() {
     } else {
       document.getElementById("poseText").innerText = "-";
     }
+
+    updateNavStatus(!!data.navigating);
   } catch (e) {
     console.error(e);
   }

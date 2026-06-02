@@ -137,6 +137,10 @@ class Nav2WebBridge(Node):
         # Nav2 액션 클라이언트
         self.nav_client = ActionClient(self, NavigateToPose, "navigate_to_pose")
 
+        # Nav2 주행 상태 추적용
+        self._goal_handle = None      # 현재 활성 goal handle (취소에 사용)
+        self._is_navigating = False   # Nav2가 현재 주행 중인지 여부
+
         # ---- SLAM Toolbox 서비스 클라이언트 ----
         self.save_map_client = self.create_client(SaveMap, "/slam_toolbox/save_map")
         self.reset_client = self.create_client(Reset, "/slam_toolbox/reset")
@@ -223,6 +227,7 @@ class Nav2WebBridge(Node):
             local_costmap_msg = self.local_costmap_msg
             global_costmap_msg = self.global_costmap_msg
             tf_pose = self.tf_pose
+            is_navigating = self._is_navigating
 
         # map
         map_json = None
@@ -316,6 +321,7 @@ class Nav2WebBridge(Node):
             "path": path_json,
             "local_costmap": local_costmap_json,
             "global_costmap": global_costmap_json,
+            "navigating": is_navigating,
         }
 
     # ---------------- Goal 전송 ----------------
@@ -335,7 +341,52 @@ class Nav2WebBridge(Node):
 
         self.get_logger().info(f"[WEB] send goal: x={x:.2f}, y={y:.2f}, yaw={yaw:.2f}")
 
-        self.nav_client.send_goal_async(goal)
+        send_future = self.nav_client.send_goal_async(goal)
+        send_future.add_done_callback(self._goal_response_cb)
+
+        with self.lock:
+            self._is_navigating = True
+        return True
+
+    # ---------------- Nav2 주행 상태/취소 ----------------
+    def _goal_response_cb(self, future):
+        """goal 수락 여부 확인 후, 활성 handle 저장 및 결과 콜백 등록."""
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().warn("[WEB] Goal rejected by Nav2.")
+            with self.lock:
+                self._is_navigating = False
+                self._goal_handle = None
+            return
+
+        with self.lock:
+            self._goal_handle = goal_handle
+
+        result_future = goal_handle.get_result_async()
+        result_future.add_done_callback(self._goal_result_cb)
+
+    def _goal_result_cb(self, future):
+        """주행 종료(성공/실패/취소) 시 상태 초기화."""
+        with self.lock:
+            self._is_navigating = False
+            self._goal_handle = None
+        self.get_logger().info("[WEB] Navigation finished.")
+
+    def is_navigating(self) -> bool:
+        with self.lock:
+            return self._is_navigating
+
+    def cancel_goal(self) -> bool:
+        """현재 Nav2 주행을 취소(정지)."""
+        with self.lock:
+            goal_handle = self._goal_handle
+
+        if goal_handle is None:
+            self.get_logger().info("[WEB] No active goal to cancel.")
+            return True
+
+        goal_handle.cancel_goal_async()
+        self.get_logger().info("[WEB] Requested goal cancel (stop).")
         return True
 
     # ---------------- SLAM Toolbox 제어 ----------------
@@ -392,6 +443,25 @@ def api_goal():
     yaw = float(data.get("yaw", 0.0))
 
     ok = ros_node.send_goal(x, y, yaw)
+    return jsonify({"success": ok})
+
+
+@app.route("/api/nav/status")
+def api_nav_status():
+    global ros_node
+    if ros_node is None:
+        return jsonify({"error": "ROS node not started"}), 500
+
+    return jsonify({"navigating": ros_node.is_navigating()})
+
+
+@app.route("/api/nav/stop", methods=["POST"])
+def api_nav_stop():
+    global ros_node
+    if ros_node is None:
+        return jsonify({"success": False, "msg": "ROS not ready"}), 500
+
+    ok = ros_node.cancel_goal()
     return jsonify({"success": ok})
 
 
