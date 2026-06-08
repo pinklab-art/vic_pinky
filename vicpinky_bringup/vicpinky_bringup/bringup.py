@@ -161,6 +161,11 @@ class VicPinky(Node):
         self.target_angular_z = max(min(msg.angular.z, max_angular), -max_angular)
         self.last_cmd_time = self.get_clock().now()
 
+    @staticmethod
+    def _wrap_encoder(delta):
+        """Normalize a signed 32-bit encoder delta to [-2^31, 2^31)."""
+        return (delta + 2**31) % 2**32 - 2**31
+
     def update_and_publish(self):
         current_time = self.get_clock().now()
         dt = (current_time - self.last_time).nanoseconds / 1e9
@@ -175,9 +180,10 @@ class VicPinky(Node):
             self.last_time = current_time
             return
 
-        delta_l = encoder_l - self.last_encoder_l
-        delta_r = encoder_r - self.last_encoder_r
-        
+        # Normalize deltas to handle 32-bit encoder counter wrap-around.
+        delta_l = self._wrap_encoder(encoder_l - self.last_encoder_l)
+        delta_r = self._wrap_encoder(encoder_r - self.last_encoder_r)
+
         self.last_encoder_l = encoder_l
         self.last_encoder_r = encoder_r
 
