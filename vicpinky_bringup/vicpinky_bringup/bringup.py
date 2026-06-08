@@ -30,9 +30,13 @@ JOINT_NAME_WHEEL_R = "right_wheel_joint"
 
 WHEEL_RAD = 0.0825
 PULSE_PER_ROT = 4096
-WHEEL_BASE = 0.4288
+WHEEL_BASE = 0.441
 RPM2RAD = 0.104719755
 CIRCUMFERENCE = 2 * math.pi * WHEEL_RAD
+
+# Must match the max RPM configured in the ZLAC driver.
+# The driver rejects speed commands above this, so never send more.
+MAX_MOTOR_RPM = 100.0
 
 
 class VicPinky(Node):
@@ -44,22 +48,41 @@ class VicPinky(Node):
         
         # --- Parameters for Acceleration/Deceleration ---
         self.declare_parameter('accel_limit', 0.4)    
-        self.declare_parameter('decel_limit', 1.0)
+        self.declare_parameter('decel_limit', 0.5)
         
         self.declare_parameter('ang_accel_limit', 1.0)
         self.declare_parameter('ang_decel_limit', 1.5)
 
+        # --- Parameters for Maximum Speed (safety limits) ---
+        self.declare_parameter('max_linear_speed', 0.3)    # [m/s]
+        self.declare_parameter('max_angular_speed', 0.5)   # [rad/s]
+
+        # --- Anti-windup: how far the smoothed command may lead measured speed ---
+        self.declare_parameter('vel_lead_limit', 0.15)      # [m/s]
+        self.declare_parameter('ang_vel_lead_limit', 0.3)   # [rad/s]
+
+        # --- Deadman: zero the target if no cmd_vel arrives within this time ---
+        self.declare_parameter('cmd_vel_timeout', 0.5)      # [s]
+
         self.accel = self.get_parameter('accel_limit').value
         self.decel = self.get_parameter('decel_limit').value
-        
+
         self.ang_accel = self.get_parameter('ang_accel_limit').value
         self.ang_decel = self.get_parameter('ang_decel_limit').value
 
+        self.max_linear_speed = self.get_parameter('max_linear_speed').value
+        self.max_angular_speed = self.get_parameter('max_angular_speed').value
+
         self.target_linear_x = 0.0
         self.target_angular_z = 0.0
-        self.current_linear_x = 0.0
-        self.current_angular_z = 0.0
-        
+
+        # Smoothed command state (ramped open-loop toward target each tick)
+        self.cmd_linear_x = 0.0
+        self.cmd_angular_z = 0.0
+
+        # Timestamp of the last received cmd_vel, for the deadman check
+        self.last_cmd_time = self.get_clock().now()
+
         self.driver = ZLACDriver(SERIAL_PORT_NAME, BAUDRATE, MODBUS_ID)
         
         self.get_logger().info("1. Opening serial port...")
@@ -131,8 +154,17 @@ class VicPinky(Node):
         self.get_logger().info('Vic Pinky Bringup has been started successfully.')
 
     def twist_callback(self, msg: Twist):
-        self.target_linear_x = msg.linear.x
-        self.target_angular_z = msg.angular.z
+        max_linear = self.get_parameter('max_linear_speed').value
+        max_angular = self.get_parameter('max_angular_speed').value
+
+        self.target_linear_x = max(min(msg.linear.x, max_linear), -max_linear)
+        self.target_angular_z = max(min(msg.angular.z, max_angular), -max_angular)
+        self.last_cmd_time = self.get_clock().now()
+
+    @staticmethod
+    def _wrap_encoder(delta):
+        """Normalize a signed 32-bit encoder delta to [-2^31, 2^31)."""
+        return (delta + 2**31) % 2**32 - 2**31
 
     def update_and_publish(self):
         current_time = self.get_clock().now()
@@ -148,9 +180,10 @@ class VicPinky(Node):
             self.last_time = current_time
             return
 
-        delta_l = encoder_l - self.last_encoder_l
-        delta_r = encoder_r - self.last_encoder_r
-        
+        # Normalize deltas to handle 32-bit encoder counter wrap-around.
+        delta_l = self._wrap_encoder(encoder_l - self.last_encoder_l)
+        delta_r = self._wrap_encoder(encoder_r - self.last_encoder_r)
+
         self.last_encoder_l = encoder_l
         self.last_encoder_r = encoder_r
 
@@ -172,33 +205,57 @@ class VicPinky(Node):
         ang_accel = self.get_parameter('ang_accel_limit').value
         ang_decel = self.get_parameter('ang_decel_limit').value
 
-        if abs(self.target_linear_x) < abs(v_x):
-            step = decel * dt
-        elif (self.target_linear_x * v_x) < 0:
-            step = decel * dt
+        lead = self.get_parameter('vel_lead_limit').value
+        ang_lead = self.get_parameter('ang_vel_lead_limit').value
+        cmd_vel_timeout = self.get_parameter('cmd_vel_timeout').value
+
+        # Deadman: if cmd_vel has gone silent, command a stop.
+        since_cmd = (current_time - self.last_cmd_time).nanoseconds / 1e9
+        if since_cmd > cmd_vel_timeout:
+            self.target_linear_x = 0.0
+            self.target_angular_z = 0.0
+
+        # --- Linear ramp: smooth the COMMAND toward target (open loop) ---
+        if abs(self.target_linear_x) < abs(self.cmd_linear_x):
+            step = decel * dt                       # reducing magnitude
+        elif (self.target_linear_x * self.cmd_linear_x) < 0:
+            step = decel * dt                       # reversing direction
         else:
             step = accel * dt
 
-        if v_x < self.target_linear_x:
-            self.cmd_linear_x = min(self.target_linear_x, v_x + step)
-        elif v_x > self.target_linear_x:
-            self.cmd_linear_x = max(self.target_linear_x, v_x - step)
+        if self.cmd_linear_x < self.target_linear_x:
+            self.cmd_linear_x = min(self.target_linear_x, self.cmd_linear_x + step)
+        elif self.cmd_linear_x > self.target_linear_x:
+            self.cmd_linear_x = max(self.target_linear_x, self.cmd_linear_x - step)
         else:
             self.cmd_linear_x = self.target_linear_x
 
-        if abs(self.target_angular_z) < abs(vth):
+        # Anti-windup: don't let the command magnitude run more than `lead`
+        # ahead of the measured speed (e.g. when stalled against an obstacle).
+        if self.cmd_linear_x > 0.0:
+            self.cmd_linear_x = min(self.cmd_linear_x, max(v_x, 0.0) + lead)
+        elif self.cmd_linear_x < 0.0:
+            self.cmd_linear_x = max(self.cmd_linear_x, min(v_x, 0.0) - lead)
+
+        # --- Angular ramp: same scheme on the angular command ---
+        if abs(self.target_angular_z) < abs(self.cmd_angular_z):
             step = ang_decel * dt
-        elif (self.target_angular_z * vth) < 0:
+        elif (self.target_angular_z * self.cmd_angular_z) < 0:
             step = ang_decel * dt
         else:
             step = ang_accel * dt
 
-        if vth < self.target_angular_z:
-            self.cmd_angular_z = min(self.target_angular_z, vth + step)
-        elif vth > self.target_angular_z:
-            self.cmd_angular_z = max(self.target_angular_z, vth - step)
+        if self.cmd_angular_z < self.target_angular_z:
+            self.cmd_angular_z = min(self.target_angular_z, self.cmd_angular_z + step)
+        elif self.cmd_angular_z > self.target_angular_z:
+            self.cmd_angular_z = max(self.target_angular_z, self.cmd_angular_z - step)
         else:
             self.cmd_angular_z = self.target_angular_z
+
+        if self.cmd_angular_z > 0.0:
+            self.cmd_angular_z = min(self.cmd_angular_z, max(vth, 0.0) + ang_lead)
+        elif self.cmd_angular_z < 0.0:
+            self.cmd_angular_z = max(self.cmd_angular_z, min(vth, 0.0) - ang_lead)
 
         try:
             v_l = self.cmd_linear_x - (self.cmd_angular_z * WHEEL_BASE / 2.0)
@@ -207,19 +264,18 @@ class VicPinky(Node):
             rpm_l_raw = v_l / (WHEEL_RAD * RPM2RAD)
             rpm_r_raw = v_r / (WHEEL_RAD * RPM2RAD)
             
-            max_rpm_limit = 28.0
             max_req = max(abs(rpm_l_raw), abs(rpm_r_raw))
-            
-            if max_req > max_rpm_limit:
-                scale = max_rpm_limit / max_req
+
+            if max_req > MAX_MOTOR_RPM:
+                scale = MAX_MOTOR_RPM / max_req
                 rpm_l_raw *= scale
                 rpm_r_raw *= scale
 
             rpm_l = int(rpm_l_raw)
             rpm_r = int(rpm_r_raw)
-            
-            rpm_l = max(min(rpm_l, max_rpm_limit), -max_rpm_limit)
-            rpm_r = max(min(rpm_r, max_rpm_limit), -max_rpm_limit)
+
+            rpm_l = max(min(rpm_l, MAX_MOTOR_RPM), -MAX_MOTOR_RPM)
+            rpm_r = max(min(rpm_r, MAX_MOTOR_RPM), -MAX_MOTOR_RPM)
 
             self.driver.set_double_rpm(rpm_l, rpm_r)
         except:
