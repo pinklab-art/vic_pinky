@@ -179,7 +179,7 @@ ros2 launch vicpinky_bringup gazebo_bringup.launch.xml
 ```
 ### 2. (Optional) 멀티 vicpinky 스폰
 ```bash
-ros2 launch vicpinky_bringup gazebo_multi_spwan.launch.xml namespace:=robot2 x:=12.0 y:=-16.0
+ros2 launch vicpinky_bringup gazebo_multi_spawn.launch.xml namespace:=robot2 x:=12.0 y:=-16.0
 ```
 
 ## Map building
