@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+  실물 USB 웹캠 (로봇에서). 발행: /camera/image_raw, /camera/camera_info
+  캘리브레이션 뒤:  camera_info_url:=file://$HOME/.ros/camera_info/webcam.yaml
+-->
+<launch>
+  <arg name="video_device" default="/dev/video0"/>
+  <arg name="camera_info_url" default="package://vicpinky_docking/config/camera_info_placeholder.yaml"/>
+  <arg name="image_width" default="640"/>
+  <arg name="image_height" default="480"/>
+  <arg name="framerate" default="30.0"/>
+  <!-- 안 되면 yuyv2rgb -->
+  <arg name="pixel_format" default="mjpeg2rgb"/>
+
+  <node pkg="usb_cam" exec="usb_cam_node_exe" name="usb_cam" namespace="camera" output="screen">
+    <param name="video_device" value="$(var video_device)"/>
+    <param name="camera_info_url" value="$(var camera_info_url)"/>
+    <param name="camera_name" value="webcam"/>
+    <!-- urdf/webcam.urdf.xacro 의 광학 프레임 -->
+    <param name="frame_id" value="camera_optical_frame"/>
+    <param name="image_width" value="$(var image_width)"/>
+    <param name="image_height" value="$(var image_height)"/>
+    <param name="framerate" value="$(var framerate)"/>
+    <param name="pixel_format" value="$(var pixel_format)"/>
+    <param name="io_method" value="mmap"/>
+    <param name="autofocus" value="false"/>
+  </node>
+</launch>

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+  시뮬용 Vic Pinky = vicpinky_description 로봇 + 카메라 링크
+  (vicpinky_description 의 camera.xacro 가 쓰는 camera_link 가 없어서 여기서 붙인다)
+  카메라: base_link 기준 x 0.085 (차체 앞면 0.1 바로 안쪽), z 0.164 (바닥에서 0.222 m = 마커 중심 높이)
+-->
+<robot name="vicpinky" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="namespace" default=""/>
+
+  <xacro:include filename="$(find vicpinky_description)/urdf/robot.urdf.xacro"/>
+  <xacro:include filename="$(find vicpinky_docking)/urdf/webcam.xacro"/>
+
+  <!-- 광학 프레임 이름 = camera.xacro 의 gz_frame_id -->
+  <xacro:webcam parent="base_link" optical_frame="camera_rgb_frame"
+                x="0.085" y="0.0" z="0.164"/>
+</robot>

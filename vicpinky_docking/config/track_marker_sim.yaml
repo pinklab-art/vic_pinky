@@ -1,0 +1,7 @@
+# ArUco 검출 (image_proc/track_marker) — 시뮬
+track_marker:
+  ros__parameters:
+    use_sim_time: true
+    marker_id: 0
+    marker_size: 0.08     # 검은 사각형 한 변 (m)
+    dictionary: 10        # DICT_6X6_250

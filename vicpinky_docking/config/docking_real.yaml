@@ -1,0 +1,52 @@
+# 도킹 서버 (opennav_docking) — 실물. 구조는 docking_sim.yaml 과 같다.
+# !!! translation_x 와 도크 pose 는 실물에서 다시 잰다.
+docking_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 50.0
+    base_frame: base_link
+    fixed_frame: odom
+    dock_prestaging_tolerance: 0.5
+    max_retries: 3
+    controller:
+      dock_collision_threshold: 0.5
+    dock_plugins: ["vicpinky_align", "vicpinky_contact"]
+
+    vicpinky_align:                   # 2 정렬
+      plugin: "opennav_docking::SimpleNonChargingDock"
+      use_external_detection_pose: true
+      external_detection_timeout: 1.0
+      external_detection_translation_x: -0.39   # = -(cam_x + 0.30)
+      external_detection_translation_y: 0.0
+      external_detection_rotation_pitch: 1.57
+      external_detection_rotation_roll: -1.57
+      external_detection_rotation_yaw: 0.0
+      filter_coef: 0.1
+      docking_threshold: 0.03
+      staging_x_offset: -0.7
+      staging_yaw_offset: 0.0
+
+    vicpinky_contact:                 # 3 전진
+      plugin: "opennav_docking::SimpleNonChargingDock"
+      use_external_detection_pose: true
+      external_detection_timeout: 3.0
+      external_detection_translation_x: -0.085  # = -(base_link → 차체 앞면 거리 - 0.015)
+      external_detection_translation_y: 0.0
+      external_detection_rotation_pitch: 1.57
+      external_detection_rotation_roll: -1.57
+      external_detection_rotation_yaw: 0.0
+      filter_coef: 0.1
+      docking_threshold: 0.02
+      staging_x_offset: -0.7
+      staging_yaw_offset: 0.0
+
+    docks: ["home_align", "home_dock"]
+    # 로봇을 그 자리에 놓고  ros2 run tf2_ros tf2_echo map base_link  로 잰 x, y, yaw
+    home_align:
+      type: "vicpinky_align"
+      frame: "map"
+      pose: [0.0, 0.0, 0.0]
+    home_dock:
+      type: "vicpinky_contact"
+      frame: "map"
+      pose: [0.0, 0.0, 0.0]

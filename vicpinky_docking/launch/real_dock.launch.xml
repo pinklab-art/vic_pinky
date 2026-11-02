@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!--
+  실물 전체 (PC 에서): Nav2 + 웹캠 TF + ArUco 검출 + 도킹 서버 + 도킹 BT + BT 창 + RViz
+  로봇에서 먼저:  ros2 launch vicpinky_bringup bringup.launch.xml
+                  ros2 launch vicpinky_docking usb_cam.launch.xml
+  PC 에서:        ros2 launch vicpinky_docking real_dock.launch.xml map:=$HOME/my_map.yaml cam_x:=0.10 cam_z:=0.17
+-->
+<launch>
+  <arg name="map" default="$(find-pkg-share vicpinky_navigation)/map/pinklab.yaml"/>
+  <arg name="nav2_params" default="$(find-pkg-share vicpinky_navigation)/params/nav2_params.yaml"/>
+  <arg name="docking_params" default="$(find-pkg-share vicpinky_docking)/config/docking_real.yaml"/>
+  <arg name="marker_params" default="$(find-pkg-share vicpinky_docking)/config/track_marker_real.yaml"/>
+  <arg name="marker_id" default="0"/>
+  <arg name="marker_size" default="0.08"/>
+  <arg name="cam_x" default="0.085"/>
+  <arg name="cam_y" default="0.0"/>
+  <arg name="cam_z" default="0.164"/>
+  <arg name="cam_pitch" default="0.0"/>
+  <arg name="rviz" default="true"/>
+  <arg name="bt_viewer" default="true"/>
+  <!-- Wi-Fi 로 받으므로 압축 영상 -->
+  <arg name="image_transport" default="compressed"/>
+
+  <!-- 웹캠 TF: base_link → camera_link → camera_optical_frame -->
+  <node pkg="robot_state_publisher" exec="robot_state_publisher" name="robot_state_publisher"
+        namespace="webcam" output="screen">
+    <param name="robot_description" type="str"
+           value="$(command 'xacro $(find-pkg-share vicpinky_docking)/urdf/webcam.urdf.xacro cam_x:=$(var cam_x) cam_y:=$(var cam_y) cam_z:=$(var cam_z) cam_pitch:=$(var cam_pitch)')"/>
+  </node>
+
+  <include file="$(find-pkg-share vicpinky_navigation)/launch/bringup_launch.xml">
+    <arg name="map" value="$(var map)"/>
+    <arg name="params_file" value="$(var nav2_params)"/>
+    <arg name="use_sim_time" value="False"/>
+  </include>
+
+  <include file="$(find-pkg-share vicpinky_docking)/launch/detector.launch.xml">
+    <arg name="params_file" value="$(var marker_params)"/>
+    <arg name="image_topic" value="/camera/image_raw"/>
+    <arg name="camera_info_topic" value="/camera/camera_info"/>
+    <arg name="marker_id" value="$(var marker_id)"/>
+    <arg name="marker_size" value="$(var marker_size)"/>
+    <arg name="use_sim_time" value="false"/>
+    <arg name="image_transport" value="$(var image_transport)"/>
+  </include>
+
+  <include file="$(find-pkg-share vicpinky_docking)/launch/docking.launch.xml">
+    <arg name="params_file" value="$(var docking_params)"/>
+    <arg name="use_sim_time" value="false"/>
+  </include>
+
+  <node pkg="vicpinky_docking" exec="bt_viewer.py" name="bt_viewer" output="screen" if="$(var bt_viewer)">
+    <param name="use_sim_time" value="false"/>
+  </node>
+
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" if="$(var rviz)"
+        args="-d $(find-pkg-share vicpinky_docking)/rviz/docking.rviz"/>
+</launch>

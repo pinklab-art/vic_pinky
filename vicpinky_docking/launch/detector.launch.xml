@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+  ArUco 검출 (sim/real 공용). 출력: /detected_dock_pose
+-->
+<launch>
+  <arg name="params_file" default="$(find-pkg-share vicpinky_docking)/config/track_marker_sim.yaml"/>
+  <arg name="image_topic" default="/camera/image_raw"/>
+  <arg name="camera_info_topic" default="/camera/camera_info"/>
+  <arg name="marker_id" default="0"/>
+  <arg name="marker_size" default="0.08"/>
+  <arg name="dictionary" default="10"/>
+  <arg name="use_sim_time" default="true"/>
+  <!-- raw | compressed -->
+  <arg name="image_transport" default="raw"/>
+
+  <node pkg="image_proc" exec="track_marker_node" name="track_marker" output="screen">
+    <param from="$(var params_file)"/>
+    <param name="marker_id" value="$(var marker_id)"/>
+    <param name="marker_size" value="$(var marker_size)"/>
+    <param name="dictionary" value="$(var dictionary)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="image_transport" value="$(var image_transport)"/>
+    <remap from="image" to="$(var image_topic)"/>
+    <remap from="$(eval &quot;'$(var image_topic)'.rsplit('/', 1)[0] + '/camera_info'&quot;)" to="$(var camera_info_topic)"/>
+    <remap from="tracked_pose" to="/detected_dock_pose"/>
+  </node>
+</launch>
