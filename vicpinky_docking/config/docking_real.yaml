@@ -1,0 +1,58 @@
+# 도킹 서버 (opennav_docking) — 실물. 구조는 docking_sim.yaml 과 같다.
+# 도킹을 결정하는 값은 전부 마커 기준이다. 맵 좌표가 아니다.
+docking_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 20.0        # wifi 로 50 Hz 는 못 따라간다
+    base_frame: base_link
+    fixed_frame: odom
+    dock_prestaging_tolerance: 0.5
+    max_retries: 0                    # 실패하면 그 자리에 선다 (후진 금지)
+    controller:
+      transform_tolerance: 0.5        # wifi 로 TF 가 늦게 올 때 기다려 주는 시간
+      dock_collision_threshold: 0.5
+      v_linear_max: 0.15
+      v_linear_min: 0.05              # 감속의 바닥값. 이 밑으로는 안 내려간다
+      v_angular_max: 0.5
+      slowdown_radius: 0.6
+    dock_plugins: ["vicpinky_align", "vicpinky_contact"]
+
+    vicpinky_align:                   # 2 정렬
+      plugin: "opennav_docking::SimpleNonChargingDock"
+      use_external_detection_pose: true
+      external_detection_timeout: 7.0           # 마커를 놓쳐도 이 시간만큼은 기억한 위치로 간다
+      external_detection_translation_x: -0.39   # 마커에서 39 cm 앞에 선다
+      external_detection_translation_y: 0.0
+      external_detection_rotation_pitch: 1.57
+      external_detection_rotation_roll: -1.57
+      external_detection_rotation_yaw: 0.0
+      filter_coef: 0.1
+      docking_threshold: 0.03
+      staging_x_offset: -0.7
+      staging_yaw_offset: 0.0
+
+    vicpinky_contact:                 # 3 전진
+      plugin: "opennav_docking::SimpleNonChargingDock"
+      use_external_detection_pose: true
+      external_detection_timeout: 8.0           # TF 버퍼가 10 초라 그 이상은 못 올린다
+      external_detection_translation_x: -0.085  # 마커에서 8.5 cm 앞까지 간다
+      external_detection_translation_y: 0.0
+      external_detection_rotation_pitch: 1.57
+      external_detection_rotation_roll: -1.57
+      external_detection_rotation_yaw: 0.0
+      filter_coef: 0.1
+      docking_threshold: 0.02
+      staging_x_offset: -0.7
+      staging_yaw_offset: 0.0
+
+    # 아래 두 개는 이름표다. BT 가 dock_id 로 "어느 설정을 쓸지" 고를 뿐이고
+    # pose 값은 마커가 잡히는 순간 검출값으로 덮어쓰여서 쓰이지 않는다. 잴 필요 없다.
+    docks: ["home_align", "home_dock"]
+    home_align:
+      type: "vicpinky_align"
+      frame: "map"
+      pose: [0.0, 0.0, 0.0]
+    home_dock:
+      type: "vicpinky_contact"
+      frame: "map"
+      pose: [0.0, 0.0, 0.0]

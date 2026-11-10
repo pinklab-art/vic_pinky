@@ -1,0 +1,21 @@
+# 캘리브레이션 전 임시값 (640x480). 캘리브레이션 후 usb_cam.launch.xml 의 camera_info_url 을 바꾼다
+image_width: 640
+image_height: 480
+camera_name: webcam
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [554.0, 0.0, 320.0, 0.0, 554.0, 240.0, 0.0, 0.0, 1.0]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.0, 0.0, 0.0, 0.0, 0.0]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [554.0, 0.0, 320.0, 0.0, 0.0, 554.0, 240.0, 0.0, 0.0, 0.0, 1.0, 0.0]

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+  충전 스테이션 도킹 BT: 1 근처 접근 → 2 정렬 → 3 전진(접촉). 하나라도 실패하면 거기서 멈춘다
+  시작: RViz 의 2D Goal Pose 로 도크 근처를 찍는다 (/docking/goal_pose)
+  보기: ros2 run vicpinky_docking bt_viewer.py
+-->
+<root BTCPP_format="4" main_tree_to_execute="DockToStation">
+  <BehaviorTree ID="DockToStation">
+    <Sequence name="도킹">
+      <Sequence name="1 근처 접근">
+        <ComputePathToPose name="경로 계획" goal="{goal}" path="{path}" planner_id="GridBased"
+                           server_name="/compute_path_to_pose"/>
+        <FollowPath name="주행" path="{path}" controller_id="FollowPath" goal_checker_id="general_goal_checker"
+                    server_name="/follow_path"/>
+      </Sequence>
+      <DockRobot name="2 정렬" use_dock_id="true" dock_id="home_align" navigate_to_staging_pose="false"
+                 server_name="/dock_robot" num_retries="{align_retries}"/>
+      <DockRobot name="3 전진 (접촉)" use_dock_id="true" dock_id="home_dock" navigate_to_staging_pose="false"
+                 server_name="/dock_robot" num_retries="{contact_retries}"/>
+    </Sequence>
+  </BehaviorTree>
+</root>

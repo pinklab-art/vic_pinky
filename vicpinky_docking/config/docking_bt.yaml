@@ -1,0 +1,16 @@
+# 도킹 BT 실행기 (네임스페이스 docking 의 bt_navigator)
+/**:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odom
+    bt_loop_duration: 10
+    default_server_timeout: 500       # ms. 기본 20 이면 PC 가 바쁠 때 1 근처 접근이 바로 실패한다
+    wait_for_service_timeout: 1000
+    action_server_result_timeout: 900.0
+    navigators: ["navigate_to_pose"]
+    navigate_to_pose:
+      plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
+    plugin_lib_names: ["opennav_dock_action_bt_node", "opennav_undock_action_bt_node"]
+    error_code_names: ["compute_path_error_code", "follow_path_error_code"]

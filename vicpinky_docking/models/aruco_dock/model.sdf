@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!--
+  충전 스테이션 모양 도크. 원점 = 앞면 중심 바닥점, +x = 로봇이 다가오는 쪽
+  마커 ArUco DICT_6X6_250 id 0, 0.08 m, 중심 높이 0.222 m. 구리색 판 2 개는 충전 접점 장식
+-->
+<sdf version="1.7">
+  <model name="aruco_dock">
+    <static>true</static>
+    <link name="body">
+      <collision name="collision">
+        <pose>-0.06 0 0.16 0 0 0</pose>
+        <geometry><box><size>0.12 0.36 0.32</size></box></geometry>
+      </collision>
+      <visual name="visual">
+        <pose>-0.06 0 0.16 0 0 0</pose>
+        <geometry><box><size>0.12 0.36 0.32</size></box></geometry>
+        <material>
+          <ambient>0.9 0.9 0.9 1</ambient>
+          <diffuse>0.9 0.9 0.9 1</diffuse>
+          <specular>0.05 0.05 0.05 1</specular>
+        </material>
+      </visual>
+      <visual name="contact_left">
+        <pose>0.001 0.08 0.10 0 0 0</pose>
+        <geometry><box><size>0.002 0.06 0.025</size></box></geometry>
+        <material>
+          <ambient>0.72 0.45 0.2 1</ambient>
+          <diffuse>0.72 0.45 0.2 1</diffuse>
+          <specular>0.6 0.5 0.4 1</specular>
+        </material>
+      </visual>
+      <visual name="contact_right">
+        <pose>0.001 -0.08 0.10 0 0 0</pose>
+        <geometry><box><size>0.002 0.06 0.025</size></box></geometry>
+        <material>
+          <ambient>0.72 0.45 0.2 1</ambient>
+          <diffuse>0.72 0.45 0.2 1</diffuse>
+          <specular>0.6 0.5 0.4 1</specular>
+        </material>
+      </visual>
+      <visual name="marker">
+        <pose>0.001 0 0.222 0 0 0</pose>
+        <geometry>
+          <mesh><uri>model://aruco_dock/meshes/marker.obj</uri></mesh>
+        </geometry>
+        <material>
+          <ambient>1 1 1 1</ambient>
+          <diffuse>1 1 1 1</diffuse>
+          <specular>0 0 0 1</specular>
+          <pbr>
+            <metal>
+              <albedo_map>model://aruco_dock/materials/textures/aruco_0.png</albedo_map>
+              <roughness>1.0</roughness>
+              <metalness>0.0</metalness>
+            </metal>
+          </pbr>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

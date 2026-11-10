@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!--
+  카메라 링크 매크로 (시뮬·실물 공용): parent → camera_link → 광학 프레임 (z 전방, x 오른쪽, y 아래)
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="webcam" params="parent optical_frame x y z roll:=0 pitch:=0 yaw:=0">
+    <joint name="camera_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="camera_link"/>
+      <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}"/>
+    </joint>
+
+    <link name="camera_link">
+      <visual>
+        <geometry><box size="0.025 0.08 0.02"/></geometry>
+        <material name="camera_black"><color rgba="0.05 0.05 0.05 1"/></material>
+      </visual>
+    </link>
+
+    <joint name="camera_optical_joint" type="fixed">
+      <parent link="camera_link"/>
+      <child link="${optical_frame}"/>
+      <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+
+    <link name="${optical_frame}"/>
+  </xacro:macro>
+</robot>

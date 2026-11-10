@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--
+  실물 웹캠 TF (real_dock.launch.xml 이 따로 띄운다)
+  !!! cam_x / cam_y / cam_z 는 줄자로 재서 바꾼다 (base_link = 바퀴축 중앙)
+      cam_x: 바퀴축 → 렌즈 (전방), cam_y: 왼쪽 +, cam_z: (바닥→렌즈) - (바닥→바퀴축)
+-->
+<robot name="vicpinky_webcam" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="cam_x" default="0.085"/>
+  <xacro:arg name="cam_y" default="0.0"/>
+  <xacro:arg name="cam_z" default="0.164"/>
+  <!-- 아래로 숙이면 + (rad) -->
+  <xacro:arg name="cam_pitch" default="0.0"/>
+
+  <xacro:include filename="$(find vicpinky_docking)/urdf/webcam.xacro"/>
+
+  <link name="base_link"/>
+
+  <xacro:webcam parent="base_link" optical_frame="camera_optical_frame"
+                x="$(arg cam_x)" y="$(arg cam_y)" z="$(arg cam_z)" pitch="$(arg cam_pitch)"/>
+</robot>

@@ -1,0 +1,7 @@
+# ArUco 검출 (image_proc/track_marker) — 실물
+track_marker:
+  ros__parameters:
+    use_sim_time: false
+    marker_id: 0
+    marker_size: 0.08     # 인쇄한 마커의 검은 사각형 한 변을 자로 잰 값 (m)
+    dictionary: 10        # DICT_6X6_250
